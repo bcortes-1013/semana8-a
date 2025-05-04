@@ -43,7 +43,7 @@ public class Veterinario{
 
     @NotNull(message = "El total no puede estar vacío")
     @Min(value = 1, message = "El total debe ser mayor a 0")
-    private Integer numeroFactura;
+    private String numeroFactura;
 
     @NotNull(message = "El total no puede estar vacío")
     @Min(value = 1, message = "El total debe ser mayor a 0")

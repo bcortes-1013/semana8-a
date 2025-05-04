@@ -1,12 +1,17 @@
 package com.semana3.microservicio_veterinario.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
+
 import com.semana3.microservicio_veterinario.model.Veterinario;
 import com.semana3.microservicio_veterinario.exception.VeterinarioNotFoundException;
 import com.semana3.microservicio_veterinario.repository.VeterinarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import java.util.List;
 
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class VeterinarioService {
 
@@ -35,16 +40,28 @@ public class VeterinarioService {
     @Autowired
     private VeterinarioRepository repository;
 
+    public VeterinarioService(VeterinarioRepository repository) {
+        this.repository = repository;
+    }
+
     public List<Veterinario> obtenerVeterinarios(){
-        return repository.findAll();
+        log.debug("Servicio: obtenerVeterinarios()");
+
+        return repository.findAll(Sort.by("id").ascending());
     } 
 
     public Veterinario obtenerVeterinarioPorId(Long id){
+        log.debug("Servicio: obtenerVeterinarioPorId({})", id);
+
         return repository.findById(id).orElseThrow(() -> new VeterinarioNotFoundException("No se ha encontrado el ID " + id));
     }
 
-    public Veterinario guardarVeterinario(Veterinario veterinario){
+    public Veterinario guardar(Veterinario veterinario){
+        log.debug("Servicio: guardar({})", veterinario.getId());
+
         if(repository.existsById(veterinario.getId())){
+            log.error("Ya existe un veterinario con ID {}", veterinario.getId());
+
             throw new IllegalArgumentException("Ya existe un veterinario con el ID " + veterinario.getId());
         }
 
@@ -52,8 +69,10 @@ public class VeterinarioService {
 
     }
 
-    public Veterinario actualizarVeterinario(Long id, Veterinario veterinarioActualizado){
-        Veterinario existente = repository.findById(id).orElseThrow(() -> new VeterinarioNotFoundException("No se ha encontrado el veterinario"));
+    public Veterinario actualizar(long id, Veterinario veterinarioActualizado){
+        log.debug("Servicio: actualizar({}, {})", id, veterinarioActualizado.getId());
+
+        Veterinario existente = repository.findById(id).orElseThrow(() -> new VeterinarioNotFoundException("No se ha encontrado el veterinario ID " + id));
 
         existente.setEspecialista(veterinarioActualizado.getEspecialista());
         existente.setCliente(veterinarioActualizado.getCliente());
@@ -65,9 +84,11 @@ public class VeterinarioService {
         return repository.save(existente);
     }
 
-    public void eliminarVeterinario(Long id) {
-        Veterinario existente = repository.findById(id).orElseThrow(() -> new VeterinarioNotFoundException("Se ha eliminado el veterinario ID " + id));
+    public void eliminar(Long id) {
+        log.debug("Servicio: eliminar({})", id);
 
-        repository.delete(existente);
+        repository.findById(id).orElseThrow(() -> new VeterinarioNotFoundException("Se ha eliminado el veterinario ID " + id));
+
+        repository.deleteById(id);
     }
 }

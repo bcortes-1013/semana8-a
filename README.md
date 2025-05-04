@@ -10,7 +10,11 @@ Este es un microservicio en **Spring Boot** que permite gestionar un listado de 
 - ✅ Insertar un registro por ID /veterinarios
 - ✅ Manejo de errores con `@ControllerAdvice`  
 - ✅ Respuestas en formato JSON   
-- ✅ Conexión con base de datos   
+- ✅ Conexión con base de datos Oracle Cloud  
+- ✅ Implementación de Hateoas  
+- ✅ Uso de Jacoco  
+- ✅ Pruebas unitarias con JUnit 
+- ✅ Docker 
 
 ## 🛠️ Tecnologías utilizadas
 - ☕ **Java 17**
@@ -19,3 +23,4 @@ Este es un microservicio en **Spring Boot** que permite gestionar un listado de 
 - 📡 **REST API**
 - 🤖 **Postman**
 - 📕 **Oracle**
+- 📦 **Docker**

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(VeterinarioNotFoundException.class)
-    public ResponseEntity<Object> handlePeliculaNotFound(VeterinarioNotFoundException ex) {
+    public ResponseEntity<Object> handleVeterinarioNotFound(VeterinarioNotFoundException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.NOT_FOUND.value());

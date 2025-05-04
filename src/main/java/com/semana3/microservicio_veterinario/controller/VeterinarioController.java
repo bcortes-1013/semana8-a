@@ -1,62 +1,90 @@
 package com.semana3.microservicio_veterinario.controller;
 
+import com.semana3.microservicio_veterinario.hateoas.VeterinarioModelAssembler;
 import com.semana3.microservicio_veterinario.model.Veterinario;
 import com.semana3.microservicio_veterinario.service.VeterinarioService;
 import com.semana3.microservicio_veterinario.model.ResponseWrapper;
 
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import jakarta.validation.Valid;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/veterinarios")
 public class VeterinarioController {
 
     private final VeterinarioService veterinarioService;
+    private final VeterinarioModelAssembler assembler;
 
-    public VeterinarioController(VeterinarioService veterinarioService){
+    public VeterinarioController(VeterinarioService veterinarioService, VeterinarioModelAssembler assembler){
         this.veterinarioService = veterinarioService;
+        this.assembler = assembler;
     }
 
     @GetMapping
-    public ResponseEntity<?> obtenerVeterinarios() {
+    public ResponseEntity<CollectionModel<EntityModel<Veterinario>>> obtenerVeterinarios() {
+        log.info("GET /veterinarios - Obteniendo todos los veterinarios");
+
         List<Veterinario> veterinarios = veterinarioService.obtenerVeterinarios();
 
         if (veterinarios.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No hay veterinarios registrados");
+            log.warn("No hay películas registradas actualmente");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CollectionModel.empty());
         }
 
-        return ResponseEntity.ok(new ResponseWrapper<>("OK", veterinarios.size(), veterinarios));
+        List<EntityModel<Veterinario>> modelos = veterinarios.stream()
+                .map(assembler::toModel)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(CollectionModel.of(modelos,
+                linkTo(methodOn(VeterinarioController.class).obtenerVeterinarios()).withSelfRel()));
     }
 
     @GetMapping("/{id}")
-    public Veterinario obtenerVeterinariosPorId(@PathVariable("id") Long id) {
-        return veterinarioService.obtenerVeterinarioPorId(id);
+    public ResponseEntity<EntityModel<Veterinario>> obtenerVeterinarioPorId(@PathVariable Long id) {
+        log.info("GET /veterinarios/{} - Buscando veterinario por ID", id);
+
+        Veterinario veterinario = veterinarioService.obtenerVeterinarioPorId(id);
+
+        return ResponseEntity.ok(assembler.toModel(veterinario));
     }
 
     @PostMapping
-    public ResponseEntity<ResponseWrapper<Veterinario>> crearVeterinario(@Valid @RequestBody Veterinario veterinario) {
+    public ResponseEntity<EntityModel<Veterinario>> crearVeterinario(@Valid @RequestBody Veterinario veterinario) {
+        log.info("POST /veterinarios - Creando veterinario: {}", veterinario.getId());
 
-        Veterinario creado = veterinarioService.guardarVeterinario(veterinario);
+        Veterinario creado = veterinarioService.guardar(veterinario);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ResponseWrapper<>("Veterinario creado exitosamente", 1, List.of(creado)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(assembler.toModel(creado));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResponseWrapper<Veterinario>> actualizarVeterinario(@PathVariable Long id, @Valid @RequestBody Veterinario veterinarioActualizado) {
+    public ResponseEntity<EntityModel<Veterinario>> actualizarVeterinario(@PathVariable Long id, @Valid @RequestBody Veterinario veterinarioActualizado) {
+        log.info("PUT /veterinarios/{} - Actualizando veterinario", id);
         
-        Veterinario actualizado = veterinarioService.actualizarVeterinario(id, veterinarioActualizado);
-        return ResponseEntity.ok(new ResponseWrapper<>("Veterinario actualizado exitosamente", 1, List.of(actualizado)));
+        Veterinario actualizada = veterinarioService.actualizar(id, veterinarioActualizado);
+
+        return ResponseEntity.ok(assembler.toModel(actualizada));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseWrapper<Void>> eliminarVeterinario(@PathVariable Long id) {
-        veterinarioService.eliminarVeterinario(id);
+        log.warn("DELETE /veterinarios/{} - Eliminando veterinario", id);
 
-        return ResponseEntity.ok(new ResponseWrapper<>("Veterinario eliminado exitosamente", 0, null));
+        veterinarioService.eliminar(id);
+
+        return ResponseEntity.ok(new ResponseWrapper<>("Veterinario eliminado con éxito", 0, null));
     }
-    
 }
